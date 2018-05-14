@@ -1,20 +1,40 @@
+var fs = require("fs"); 
+var request = require("request");
 require("dotenv").config();
-
 var keys = require("./keys");
+var spotify = require("spotify");
+var twitter = require("twitter");
+var nodeArgs = process.argv;
+var userInput = process.argv[2];
 
 var spotifyId = keys.spotify.id;
-
-console.log("id: " + spotifyId);
-
 var spotify = new Spotify(keys.spotify);
 var client = new Twitter(keys.twitter);
 
-//Make it so liri.js can take in one of the following commands:
+//liri.js commands:
+switch (userInput) {
+    case "my-tweets":
+      myTweets();
+      break;
+    
+    case "spotify-this-song":
+      spotifyThisSong();
+      break;
+    
+    case "movie-this":
+      movieThis();
+      break;
+    
+    case "do-what-it-says":
+      doWhatItSays();
+      break;
+    }
 
 // my-tweets : show your last 20 tweets and when they were created at in your terminal/bash window
 //==========================================
 
 // use node-spotify-api package in order to retrieve song information from the Spotify API.
+
 // spotify-this-song : '<song name here>' 
 //This will show the following information about the song in your terminal/bash window
 // Artist(s)
@@ -22,11 +42,14 @@ var client = new Twitter(keys.twitter);
 // A preview link of the song from Spotify
 // The album that the song is from
 // If no song is provided then your program will default to "The Sign" by Ace of Base.
-//==========================================
 
+//==========================================
+function movieThis(){
 //movie-this '<movie name here>'
-var nodeArgs = process.argv;
 var movieNameArr = nodeArgs.slice(2);
+
+// Grab or assemble the movie name and store it in a variable called "movieName"
+var movieName = movieNameArr.join("%20");
 
 //Log required movie information
 function movieInfo(){
@@ -39,8 +62,11 @@ function movieInfo(){
     console.log("Plot: "+ JSON.parse(body).Plot);
     console.log("Actors: "+ JSON.parse(body).Actors);
 }
-// Grab or assemble the movie name and store it in a variable called "movieName"
-var movieName = movieNameArr.join("%20");
+    //If the user doesn't type a movie in, the program will output data for the movie 'Mr. Nobody.' 
+    if (!movieName){
+        movieName = "mr.nobody";
+    }
+    
 // Run a request to the OMDB API with the movie specified
 var queryURL = "http://www.omdbapi.com/?t=" + movieName + "&y=&plot=short&apikey=trilogy";
 console.log(queryURL);
@@ -53,16 +79,10 @@ console.log(queryURL);
      // If the request was successful
     else if (!error && response.statusCode === 200) {
         movieInfo();
-    }
-     //If the user doesn't type a movie in, the program will output data for the movie 'Mr. Nobody.'  
-    else if (movieName === null){
-        queryURL = "http://http://www.omdbapi.com/?t=mr.nobody&y=&plot=short&apikey=trilogy";
-        movieInfo();  
-    }
+    } 
   });
 
-
-//You'll use the request package to retrieve data from the OMDB API. API key = trilogy.
+};
 
 //===============================================
 // do-what-it-says
