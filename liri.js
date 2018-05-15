@@ -1,42 +1,72 @@
-var fs = require("fs"); 
+var fs = require("fs");
 var request = require("request");
 require("dotenv").config();
 var keys = require("./keys");
-var spotify = require("spotify");
-var twitter = require("twitter");
-var nodeArgs = process.argv;
-var userInput = process.argv[2];
+var Spotify = require("node-spotify-api");
+var Twitter = require("twitter");
+// var nodeArgs = process.argv;
+var userInput = process.argv[3];
+var userCommand = process.argv[2];
 
-var spotifyId = keys.spotify.id;
+// var spotifyId = keys.spotify.id;
 var spotify = new Spotify(keys.spotify);
 var client = new Twitter(keys.twitter);
 
 //liri.js commands:
-switch (userInput) {
-    case "my-tweets":
-      myTweets();
-      break;
-    
-    case "spotify-this-song":
-      spotifyThisSong();
-      break;
-    
-    case "movie-this":
-      movieThis();
-      break;
-    
-    case "do-what-it-says":
-      doWhatItSays();
-      break;
-    }
+switch (userCommand) {
+  case "my-tweets":
+    myTweets();
+    break;
+
+  case "spotify-this-song":
+    spotifyThisSong();
+    break;
+
+  case "movie-this":
+    movieThis();
+    break;
+
+  case "do-what-it-says":
+    doWhatItSays();
+    break;
+
+  case "help":
+    help();
+}
+
+function help() {
+  console.log("\nStart by typing 'node liri.js' followed by one of the following commands: " +
+    "\n1. my-tweets" + "\n2. spotify-this-song" + "\n3. movie-this" + "\n4. do-what-it-says" +
+    "\nNote: any movie or song name that consists of more than one word must be in quotation marks");
+};
 
 // my-tweets : show your last 20 tweets and when they were created at in your terminal/bash window
+
 //==========================================
 
-// use node-spotify-api package in order to retrieve song information from the Spotify API.
+function spotifyThisSong() {
+  var songName = process.argv[3];
+  if (!songName) {
+    songName = "the sign artist:ace of base";
+  }
+  spotify.search({ type: 'track', query: songName }, function (err, data) {
+    if (err) {
+      return console.log('Error occurred: ' + err);
+    }
+    else{    
+      var firstItem = data.tracks.items[0];
+      if(firstItem){
+        // console.log(firstItem.artists.name);
+        console.log("Artist: " + firstItem.artists[0].name);
+        console.log("\nSong: " + firstItem.name);
+        console.log("\nPreview URL: " + firstItem.preview_url);
+        console.log("\nAlbum: " + firstItem.album.name);
+      }
+    }
+  });
+};
+// spotifyThisSong();
 
-// spotify-this-song : '<song name here>' 
-//This will show the following information about the song in your terminal/bash window
 // Artist(s)
 // The song's name
 // A preview link of the song from Spotify
@@ -44,42 +74,36 @@ switch (userInput) {
 // If no song is provided then your program will default to "The Sign" by Ace of Base.
 
 //==========================================
-function movieThis(){
-//movie-this '<movie name here>'
-var movieNameArr = nodeArgs.slice(2);
 
-// Grab or assemble the movie name and store it in a variable called "movieName"
-var movieName = movieNameArr.join("%20");
+function movieInfo(body1) {
+  console.log("Title: " + JSON.parse(body1).Title);
+  console.log("Year the movie came out: " + JSON.parse(body1).Year);
+  console.log("IMDB Rating: " + JSON.parse(body1).imdbRating);
+  console.log("Rotten Tomatoes Rating: " + JSON.parse(body1).Ratings[1].Value);
+  console.log("Country: " + JSON.parse(body1).Country);
+  console.log("Language: " + JSON.parse(body1).Language);
+  console.log("Plot: " + JSON.parse(body1).Plot);
+  console.log("Actors: " + JSON.parse(body1).Actors);
+};
+function movieThis() {
+  //If the user doesn't type a movie in, the program will output data for the movie 'Mr. Nobody.' 
+  if (!userInput) {
+    userInput = "mr.nobody";
+  };
 
-//Log required movie information
-function movieInfo(){
-    console.log("Title: "+ JSON.parse(body).Title);
-    console.log("Year the movie came out: "+ JSON.parse(body).Year);
-    console.log("IMDB Rating: "+ JSON.parse(body).imdbRating);
-    console.log("Rotten Tomatoes Rating: "+ JSON.parse(body).Ratings[1].Value);
-    console.log("Country: "+ JSON.parse(body).Country);
-    console.log("Language: "+ JSON.parse(body).Language);
-    console.log("Plot: "+ JSON.parse(body).Plot);
-    console.log("Actors: "+ JSON.parse(body).Actors);
-}
-    //If the user doesn't type a movie in, the program will output data for the movie 'Mr. Nobody.' 
-    if (!movieName){
-        movieName = "mr.nobody";
+  // Run a request to the OMDB API with the movie specified
+  var queryURL = "http://www.omdbapi.com/?t=" + userInput + "&y=&plot=short&apikey=trilogy";
+  console.log(queryURL);
+
+  // Create a request to the queryUrl
+  request(queryURL, function (error, response, body) {
+    if (error) {
+      return console.log("error: ", error); // Print the error if one occurred 
     }
-    
-// Run a request to the OMDB API with the movie specified
-var queryURL = "http://www.omdbapi.com/?t=" + movieName + "&y=&plot=short&apikey=trilogy";
-console.log(queryURL);
-
-// Create a request to the queryUrl
-  request(queryURL, function(error, response, body) {
-    if(error){
-        console.log("error: ", error); // Print the error if one occurred 
-      }
-     // If the request was successful
+    // If the request was successful
     else if (!error && response.statusCode === 200) {
-        movieInfo();
-    } 
+      movieInfo(body);
+    }
   });
 
 };
