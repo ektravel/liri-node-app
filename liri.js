@@ -4,11 +4,8 @@ require("dotenv").config();
 var keys = require("./keys");
 var Spotify = require("node-spotify-api");
 var Twitter = require("twitter");
-// var nodeArgs = process.argv;
 var userInput = process.argv[3];
 var userCommand = process.argv[2];
-
-// var spotifyId = keys.spotify.id;
 var spotify = new Spotify(keys.spotify);
 var client = new Twitter(keys.twitter);
 
@@ -37,10 +34,25 @@ switch (userCommand) {
 function help() {
   console.log("\nStart by typing 'node liri.js' followed by one of the following commands: " +
     "\n1. my-tweets" + "\n2. spotify-this-song" + "\n3. movie-this" + "\n4. do-what-it-says" +
-    "\nNote: any movie or song name that consists of more than one word must be in quotation marks");
+    "\nNote: any movie or song name that consists of more than one word must be in quotation marks.");
 };
 
-// my-tweets : show your last 20 tweets and when they were created at in your terminal/bash window
+//=========================================
+
+function myTweets() {
+  var params = process.argv[3];
+  if (!params) {
+    params = { screen_name: "bootcamp_ut" };
+  };
+
+  client.get("statuses/user_timeline", params, function (error, tweets, response) {
+    if (!error) {
+      for (i = 0; i < tweets.length; i++) {
+        console.log("\nI wrote: " + tweets[i].text + "." + "\nThis tweet was written on: " + tweets[i].created_at + ".");
+      }
+    }
+  });
+};
 
 //==========================================
 
@@ -53,9 +65,9 @@ function spotifyThisSong() {
     if (err) {
       return console.log('Error occurred: ' + err);
     }
-    else{    
+    else {
       var firstItem = data.tracks.items[0];
-      if(firstItem){
+      if (firstItem) {
         // console.log(firstItem.artists.name);
         console.log("Artist: " + firstItem.artists[0].name);
         console.log("\nSong: " + firstItem.name);
@@ -65,13 +77,6 @@ function spotifyThisSong() {
     }
   });
 };
-// spotifyThisSong();
-
-// Artist(s)
-// The song's name
-// A preview link of the song from Spotify
-// The album that the song is from
-// If no song is provided then your program will default to "The Sign" by Ace of Base.
 
 //==========================================
 
@@ -86,16 +91,12 @@ function movieInfo(body1) {
   console.log("Actors: " + JSON.parse(body1).Actors);
 };
 function movieThis() {
-  //If the user doesn't type a movie in, the program will output data for the movie 'Mr. Nobody.' 
   if (!userInput) {
     userInput = "mr.nobody";
   };
-
-  // Run a request to the OMDB API with the movie specified
   var queryURL = "http://www.omdbapi.com/?t=" + userInput + "&y=&plot=short&apikey=trilogy";
-  console.log(queryURL);
+  // console.log(queryURL);
 
-  // Create a request to the queryUrl
   request(queryURL, function (error, response, body) {
     if (error) {
       return console.log("error: ", error); // Print the error if one occurred 
@@ -105,7 +106,6 @@ function movieThis() {
       movieInfo(body);
     }
   });
-
 };
 
 //===============================================
